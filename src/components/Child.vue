@@ -3,11 +3,39 @@
     class="editor"
     v-bind:style="{border: editorBorder}"
   >
+     <editor-menu-bubble class="menububble" :editor="editor" @hide="hideLinkMenu" v-slot="{ commands, isActive, getMarkAttrs, menu }">
+      <div
+        class="menububble"
+        :class="{ 'is-active': menu.isActive }"
+        :style="`left: ${menu.left}px; bottom: ${menu.bottom}px;`"
+      >
+
+        <form class="menububble__form" v-if="linkMenuIsActive" @submit.prevent="setLinkUrl(commands.link, linkUrl)">
+          <input class="menububble__input" type="text" v-model="linkUrl" placeholder="https://" ref="linkInput" @keydown.esc="hideLinkMenu"/>
+          <button class="menububble__button" @click="setLinkUrl(commands.link, null)" type="button">
+            <icon name="remove" />
+          </button>
+        </form>
+
+        <template v-else>
+          <button
+            class="menububble__button"
+            @click="showLinkMenu(getMarkAttrs('link'))"
+            :class="{ 'is-active': isActive.link() }"
+          >
+            <span>{{ isActive.link() ? 'Update Link' : 'Add Link'}}</span>
+            <icon name="link" />
+          </button>
+        </template>
+
+      </div>
+    </editor-menu-bubble>
     <editor-menu-bar
       :editor="editor"
       :autoFocus="false"
       v-slot="{ commands, isActive }"
     >
+    
       <div
         v-if="editable"
         class="menubar"
@@ -128,45 +156,30 @@
         >redo
           <font-awesome-icon icon="redo" />
         </button>
-
-         <form class="menububble__form" v-if="linkMenuIsActive" @submit.prevent="setLinkUrl(commands.link, linkUrl)">
-          <input class="menububble__input" type="text" v-model="linkUrl" placeholder="https://" ref="linkInput" @keydown.esc="hideLinkMenu"/>
-          <button class="menububble__button" @click="setLinkUrl(commands.link, null)" type="button">
-            remove<icon name="remove" />
-          </button>
-        </form>
-
-        <template v-else>
-          <button
-            class="menububble__button"
-            @click="showLinkMenu(getMarkAttrs('link'))"
-            :class="{ 'is-active': isActive.link() }"
-          >
-            <span>{{ isActive.link() ? 'Update Link' : 'Add Link'}}</span>
-            add<icon name="link" />
-          </button>
-        </template>
-
           <button
           class="menubar__button"
           @click="onc()"
         >Image
           <icon name="image" />
         </button>
+        <button type="button" :class="{ 'is-active': isActive.blockquote() }" @click="commands.blockquote">
+        Blockquote
+      </button>
  
       </div>
     </editor-menu-bar>
- 
+    
     <editor-content
       class="editor__content"
       v-bind:style="{'min-height': computedMinHeight}"
       :editor="editor"
     />
    <Icon name="code" />
+   
   </div>
 </template>
 <script>
-import { Editor, EditorContent, EditorMenuBar } from 'tiptap'
+import { Editor, EditorContent, EditorMenuBar, EditorMenuBubble } from 'tiptap'
 
 import {
   Blockquote,
@@ -194,6 +207,8 @@ export default {
   components: {
     EditorContent,
     EditorMenuBar,
+    EditorMenuBubble,
+
     Icon
   },
   props: {
@@ -250,6 +265,8 @@ export default {
       ],
       
       //   content: this.editorContent,
+         linkUrl: null,
+      linkMenuIsActive: false,
       editable: this.editable,
      // eslint-disable-next-line
       onUpdate: ({ getJSON, getHTML }) => {
@@ -318,11 +335,7 @@ export default {
         command({ src })
       }
     },
-    onc(){
-      alert("fd");
-          // eslint-disable-next-line
-      console.log("fd");
-    }
+   
 }
 </script>
 <style scoped>
